@@ -17,7 +17,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        // Render terminates HTTPS at its reverse proxy before forwarding to Apache.
+        if (env('RENDER') === true || env('RENDER') === 'true') {
+            $middleware->trustProxies(at: '*', headers: Request::HEADER_X_FORWARDED_FOR | Request::HEADER_X_FORWARDED_PORT | Request::HEADER_X_FORWARDED_PROTO);
+        }
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->render(function (HttpExceptionInterface $exception, Request $request) {
