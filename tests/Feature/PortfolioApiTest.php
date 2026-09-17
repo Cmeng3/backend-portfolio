@@ -31,6 +31,28 @@ class PortfolioApiTest extends TestCase
         return $user;
     }
 
+    public function test_project_taxonomy_visibility_preserves_assignments_and_hides_public_labels(): void
+    {
+        $this->actingAs($this->admin());
+        $category = $this->postJson('/api/v1/admin/project-categories', ['name' => 'Backend', 'slug' => 'backend', 'is_visible' => true])->assertCreated()->json('data.id');
+        $technology = $this->postJson('/api/v1/admin/technologies', ['name' => 'Laravel', 'slug' => 'laravel', 'is_visible' => true])->assertCreated()->json('data.id');
+        $project = Project::factory()->create(['project_category_id' => $category, 'published_at' => now()->subMinute(), 'is_visible' => true]);
+        $project->technologies()->attach($technology);
+        foreach (['project-categories' => $category, 'technologies' => $technology] as $resource => $id) {
+            $this->getJson('/api/v1/admin/'.$resource)->assertJsonPath('data.0.projects_count', 1);
+            $this->patchJson('/api/v1/admin/'.$resource.'/'.$id, ['is_visible' => false])->assertOk()->assertJsonPath('data.is_visible', false);
+            $this->getJson('/api/v1/'.$resource)->assertJsonCount(0, 'data');
+            $this->patchJson('/api/v1/admin/'.$resource.'/'.$id, ['is_visible' => 'invalid'])->assertUnprocessable();
+        }
+        $this->getJson('/api/v1/projects/'.$project->slug)->assertOk()->assertJsonPath('data.category', null)->assertJsonCount(0, 'data.technologies');
+        $this->getJson('/api/v1/projects?category=backend')->assertJsonCount(0, 'data');
+        $this->getJson('/api/v1/projects?technology=laravel')->assertJsonCount(0, 'data');
+        $this->getJson('/api/v1/admin/projects/'.$project->id)->assertJsonPath('data.category.id', $category)->assertJsonPath('data.technologies.0.id', $technology);
+        $this->patchJson('/api/v1/admin/project-categories/'.$category, ['is_visible' => true])->assertOk();
+        $this->patchJson('/api/v1/admin/technologies/'.$technology, ['is_visible' => true])->assertOk();
+        $this->getJson('/api/v1/projects/'.$project->slug)->assertJsonPath('data.category.id', $category)->assertJsonPath('data.technologies.0.id', $technology);
+    }
+
     public function test_education_documents_can_be_uploaded_attached_and_published(): void
     {
         Storage::fake('public');
@@ -107,6 +129,27 @@ class PortfolioApiTest extends TestCase
         $this->postJson('/api/v1/admin/projects', ['title' => 'Invalid', 'slug' => 'bad', 'repository_url' => 'javascript:alert(1)'])->assertUnprocessable();
         $this->deleteJson('/api/v1/admin/projects/'.$id)->assertNoContent();
         $this->assertSoftDeleted('projects', ['id' => $id]);
+    }
+
+    public function test_project_visibility_and_publication_protect_all_public_endpoints(): void
+    {
+        $visible = Project::factory()->create(['slug' => 'public-visible', 'published_at' => now()->subMinute(), 'is_visible' => true, 'is_featured' => true]);
+        $hidden = Project::factory()->create(['slug' => 'public-hidden', 'published_at' => now()->subMinute(), 'is_visible' => false, 'is_featured' => true]);
+        Project::factory()->create(['slug' => 'draft-visible', 'published_at' => null, 'is_visible' => true, 'is_featured' => true]);
+        Project::factory()->create(['slug' => 'draft-hidden', 'published_at' => null, 'is_visible' => false]);
+        foreach (['/api/v1/projects', '/api/v1/projects/featured'] as $endpoint) {
+            $this->getJson($endpoint)->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.id', $visible->id);
+        }
+        foreach (['public-hidden', 'draft-visible', 'draft-hidden'] as $slug) {
+            $this->getJson('/api/v1/projects/'.$slug)->assertNotFound();
+        }
+        $this->actingAs($this->admin());
+        $this->getJson('/api/v1/admin/projects')->assertOk()->assertJsonCount(4, 'data');
+        $this->patchJson('/api/v1/admin/projects/'.$hidden->id, ['is_visible' => true])->assertOk();
+        $this->getJson('/api/v1/projects/public-hidden')->assertOk();
+        $this->patchJson('/api/v1/admin/projects/'.$hidden->id, ['published_at' => null])->assertOk();
+        $this->getJson('/api/v1/projects/public-hidden')->assertNotFound();
+        $this->patchJson('/api/v1/admin/projects/'.$visible->id, ['is_visible' => 'invalid'])->assertUnprocessable();
     }
 
     public function test_admin_cannot_access_users_or_cross_article_types(): void

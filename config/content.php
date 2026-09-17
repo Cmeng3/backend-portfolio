@@ -85,6 +85,7 @@ return [
         'model' => 'ProjectCategory',
         'table' => 'project_categories',
         'fields' => [
+            'is_visible' => ['type' => 'checkbox', 'required' => false, 'rules' => ['sometimes', 'boolean'], 'default' => true],
             'name' => ['type' => 'text', 'required' => true, 'rules' => ['required', 'string', 'max:255'], 'unique' => false],
             'slug' => ['type' => 'text', 'required' => true, 'rules' => ['required', 'string', 'max:255', 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/'], 'unique' => true],
             'description' => ['type' => 'textarea', 'required' => false, 'rules' => ['nullable', 'string', 'max:10000'], 'unique' => false],
@@ -96,6 +97,7 @@ return [
         'model' => 'Technology',
         'table' => 'technologies',
         'fields' => [
+            'is_visible' => ['type' => 'checkbox', 'required' => false, 'rules' => ['sometimes', 'boolean'], 'default' => true],
             'name' => ['type' => 'text', 'required' => true, 'rules' => ['required', 'string', 'max:255'], 'unique' => false],
             'slug' => ['type' => 'text', 'required' => true, 'rules' => ['required', 'string', 'max:255', 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/'], 'unique' => true],
             'website_url' => ['type' => 'url', 'required' => false, 'rules' => ['nullable', 'string', 'max:10000', 'url:http,https'], 'unique' => false],
@@ -106,6 +108,7 @@ return [
         'model' => 'Project',
         'table' => 'projects',
         'fields' => [
+            'is_visible' => ['type' => 'checkbox', 'required' => false, 'rules' => ['sometimes', 'boolean'], 'default' => true],
             'project_category_id' => ['type' => 'reference', 'required' => false, 'rules' => ['nullable', 'integer', 'exists:project_categories,id'], 'unique' => false, 'reference' => 'project_categories'],
             'cover_media_id' => ['type' => 'reference', 'required' => false, 'rules' => ['nullable', 'integer', 'exists:media,id'], 'unique' => false, 'reference' => 'media'],
             'title' => ['type' => 'text', 'required' => true, 'rules' => ['required', 'string', 'max:255'], 'unique' => false],

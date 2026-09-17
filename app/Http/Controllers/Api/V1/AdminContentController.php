@@ -22,6 +22,9 @@ class AdminContentController extends Controller
         $input = $request->validate(['page' => 'nullable|integer|min:1', 'per_page' => 'nullable|integer|min:1|max:100', 'search' => 'nullable|string|max:100', 'status' => 'nullable|in:unread,read,replied,archived,spam']);
         $definition = ContentRegistry::get($resource);
         $query = ContentRegistry::query($resource)->with($definition['relations']);
+        if (in_array($resource, ['project-categories', 'technologies'])) {
+            $query->withCount('projects');
+        }
         $field = isset($definition['fields']['title']) ? 'title' : (isset($definition['fields']['name']) ? 'name' : null);
         if ($resource === 'contact-messages') {
             if (! empty($input['status'])) {

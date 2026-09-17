@@ -12,6 +12,12 @@ class ContentResource extends JsonResource
         $data = $this->resource->toArray();
         if (! $request->is('api/v1/admin/*')) {
             unset($data['uploaded_by'], $data['author_id'], $data['deleted_at']);
+            if (($data['category']['is_visible'] ?? true) === false) {
+                $data['category'] = null;
+            }
+            if (isset($data['technologies'])) {
+                $data['technologies'] = array_values(array_filter($data['technologies'], fn (array $technology): bool => ($technology['is_visible'] ?? true) !== false));
+            }
             if (isset($data['project']) && (! $data['project']['published_at'] || strtotime($data['project']['published_at']) > time())) {
                 $data['project'] = null;
             }

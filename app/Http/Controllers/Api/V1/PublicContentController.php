@@ -39,7 +39,12 @@ class PublicContentController extends Controller
         }
         foreach (['category' => 'category', 'technology' => 'technologies', 'tag' => 'tags'] as $filter => $relation) {
             if (! empty($input[$filter]) && in_array($relation, $definition['relations'])) {
-                $query->whereHas($relation, fn (Builder $q) => $q->where('slug', $input[$filter]));
+                $query->whereHas($relation, function (Builder $q) use ($filter, $input) {
+                    $q->where('slug', $input[$filter]);
+                    if (in_array($q->getModel()->getTable(), ['project_categories', 'technologies'])) {
+                        $q->where('is_visible', true);
+                    }
+                });
             }
         }
         if ($request->boolean('featured') && isset($definition['fields']['is_featured'])) {
