@@ -36,6 +36,6 @@ Route::prefix('v1')->middleware('throttle:120,1')->group(function (): void {
     Route::get('projects/featured', [PublicContentController::class, 'featured']);
     Route::get('resumes/{resume}/file', [ResumeFileController::class, 'preview'])->whereNumber('resume');
     Route::get('resumes/{resume}/download', [ResumeFileController::class, 'download'])->whereNumber('resume');
-    Route::get('{resource}', [PublicContentController::class, 'index'])->where('resource', 'projects|project-categories|technologies|skills|skill-categories|experience|education|certifications|engineering|blog|blog-categories|blog-tags|site-settings|social-links|profile|resumes');
-    Route::get('{resource}/{slug}', [PublicContentController::class, 'show'])->where('resource', 'projects|blog|engineering');
+    Route::get('{resource}', [PublicContentController::class, 'index'])->where('resource', 'projects|project-categories|technologies|skills|skill-categories|experience|education|certifications|blog|blog-categories|blog-tags|site-settings|social-links|profile|resumes');
+    Route::get('{resource}/{slug}', [PublicContentController::class, 'show'])->where('resource', 'projects|blog');
 });

@@ -10,6 +10,18 @@ use Tests\TestCase;
 
 class PortfolioSchemaTest extends TestCase
 {
+    public function test_removing_engineering_preserves_blog_articles(): void
+    {
+        $migration = require database_path('migrations/2026_09_17_190000_remove_engineering_section.php');
+        $migration->down();
+        $blog = DB::table('articles')->insertGetId(['title' => 'Keep', 'slug' => 'keep', 'type' => 'blog']);
+        DB::table('articles')->insert(['title' => 'Remove', 'slug' => 'remove', 'type' => 'engineering']);
+        $migration->up();
+        $this->assertDatabaseHas('articles', ['id' => $blog, 'slug' => 'keep']);
+        $this->assertDatabaseMissing('articles', ['slug' => 'remove']);
+        $this->assertFalse(Schema::hasColumn('articles', 'type'));
+    }
+
     use DatabaseMigrations;
 
     public function test_all_portfolio_tables_exist_and_content_starts_empty(): void
@@ -26,7 +38,7 @@ class PortfolioSchemaTest extends TestCase
     public function test_new_content_is_unpublished_and_messages_are_unread(): void
     {
         $project = DB::table('projects')->insertGetId(['title' => 'Draft', 'slug' => 'draft']);
-        $article = DB::table('articles')->insertGetId(['title' => 'Note', 'slug' => 'note', 'type' => 'engineering']);
+        $article = DB::table('articles')->insertGetId(['title' => 'Note', 'slug' => 'note']);
         $message = DB::table('contact_messages')->insertGetId(['name' => 'Visitor', 'email' => 'visitor@example.com', 'message' => 'Hello']);
 
         $this->assertDatabaseHas('projects', ['id' => $project, 'published_at' => null, 'status' => null, 'is_featured' => false]);

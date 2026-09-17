@@ -69,7 +69,7 @@ class PublicContentController extends Controller
 
     public function show(string $resource, string $slug): ContentResource
     {
-        abort_unless(in_array($resource, ['projects', 'blog', 'engineering']), 404);
+        abort_unless(in_array($resource, ['projects', 'blog']), 404);
 
         return new ContentResource($this->published($resource)->where('slug', $slug)->firstOrFail());
     }

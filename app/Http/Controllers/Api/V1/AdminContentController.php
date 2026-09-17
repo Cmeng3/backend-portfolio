@@ -73,8 +73,7 @@ class AdminContentController extends Controller
                     unset($values[$field]);
                 }
             }
-            if (isset($definition['type'])) {
-                $values['type'] = $definition['type'];
+            if ($resource === 'blog') {
                 if (! $id) {
                     $values['author_id'] = $request->user()->id;
                 }

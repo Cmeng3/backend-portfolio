@@ -24,9 +24,6 @@ class ContentRegistry
         $definition = self::get($resource);
         $class = 'App\\Models\\'.$definition['model'];
         $query = $class::query();
-        if (isset($definition['type'])) {
-            $query->where('type', $definition['type']);
-        }
 
         return $query;
     }

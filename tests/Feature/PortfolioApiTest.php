@@ -169,11 +169,14 @@ class PortfolioApiTest extends TestCase
         $this->patchJson('/api/v1/admin/projects/'.$visible->id, ['is_visible' => 'invalid'])->assertUnprocessable();
     }
 
-    public function test_admin_cannot_access_users_or_cross_article_types(): void
+    public function test_engineering_is_removed_and_blog_still_works(): void
     {
         $this->actingAs($this->admin());
-        $id = $this->postJson('/api/v1/admin/engineering', ['title' => 'Design', 'slug' => 'design'])->assertCreated()->json('data.id');
-        $this->patchJson('/api/v1/admin/blog/'.$id, ['title' => 'Wrong'])->assertNotFound();
+        $this->getJson('/api/v1/engineering')->assertNotFound();
+        $this->getJson('/api/v1/admin/engineering')->assertNotFound();
+        $this->postJson('/api/v1/admin/engineering', ['title' => 'Design', 'slug' => 'design'])->assertNotFound();
+        $id = $this->postJson('/api/v1/admin/blog', ['title' => 'Blog', 'slug' => 'blog'])->assertCreated()->json('data.id');
+        $this->patchJson('/api/v1/admin/blog/'.$id, ['title' => 'Updated'])->assertOk();
         $this->getJson('/api/v1/admin/users')->assertNotFound();
     }
 
@@ -257,7 +260,7 @@ class PortfolioApiTest extends TestCase
     public function test_private_settings_and_scheduled_articles_are_hidden(): void
     {
         SiteSetting::create(['key' => 'private', 'value' => ['note' => 'private'], 'is_public' => false]);
-        Article::create(['title' => 'Later', 'slug' => 'later', 'type' => 'blog', 'published_at' => now()->addDay()]);
+        Article::create(['title' => 'Later', 'slug' => 'later', 'published_at' => now()->addDay()]);
         $this->getJson('/api/v1/site-settings')->assertOk()->assertJsonCount(0, 'data');
         $this->getJson('/api/v1/blog/later')->assertNotFound();
     }
