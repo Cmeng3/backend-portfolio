@@ -99,6 +99,20 @@ class PortfolioApiTest extends TestCase
         $this->getJson('/api/v1/contact-messages')->assertNotFound();
     }
 
+    public function test_admin_inbox_filters_and_tracks_read_and_replied_messages(): void
+    {
+        $this->postJson('/api/v1/contact', ['name' => 'Recruiter', 'email' => 'recruiter@example.com', 'subject' => 'Backend role', 'message' => 'Please discuss this opportunity with us.'])->assertCreated();
+        $this->actingAs($this->admin());
+        $message = $this->getJson('/api/v1/admin/contact-messages?search=recruiter%40example.com&status=unread')->assertOk()->assertJsonCount(1, 'data')->json('data.0');
+        $this->patchJson('/api/v1/admin/contact-messages/'.$message['id'], ['status' => 'read'])->assertOk()->assertJsonPath('data.status', 'read');
+        $this->assertDatabaseMissing('contact_messages', ['id' => $message['id'], 'read_at' => null]);
+        $this->getJson('/api/v1/admin/contact-messages?status=unread')->assertOk()->assertJsonCount(0, 'data');
+        $this->patchJson('/api/v1/admin/contact-messages/'.$message['id'], ['status' => 'replied', 'admin_notes' => 'Responded by email.'])->assertOk()->assertJsonPath('data.admin_notes', 'Responded by email.');
+        $this->assertDatabaseMissing('contact_messages', ['id' => $message['id'], 'replied_at' => null]);
+        $options = $this->getJson('/api/v1/admin/schema')->json('data.contact-messages.fields.status.options');
+        $this->assertSame($options, array_values(array_unique($options)));
+    }
+
     public function test_login_requires_admin_and_logout_ends_session(): void
     {
         $admin = $this->admin();

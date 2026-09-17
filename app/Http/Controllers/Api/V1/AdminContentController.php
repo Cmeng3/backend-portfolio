@@ -19,15 +19,26 @@ class AdminContentController extends Controller
 
     public function index(Request $request, string $resource): mixed
     {
-        $input = $request->validate(['page' => 'nullable|integer|min:1', 'per_page' => 'nullable|integer|min:1|max:100', 'search' => 'nullable|string|max:100']);
+        $input = $request->validate(['page' => 'nullable|integer|min:1', 'per_page' => 'nullable|integer|min:1|max:100', 'search' => 'nullable|string|max:100', 'status' => 'nullable|in:unread,read,replied,archived,spam']);
         $definition = ContentRegistry::get($resource);
         $query = ContentRegistry::query($resource)->with($definition['relations']);
         $field = isset($definition['fields']['title']) ? 'title' : (isset($definition['fields']['name']) ? 'name' : null);
-        if ($field && ! empty($input['search'])) {
+        if ($resource === 'contact-messages') {
+            if (! empty($input['status'])) {
+                $query->where('status', $input['status']);
+            }
+            if (! empty($input['search'])) {
+                $query->where(function ($query) use ($input) {
+                    foreach (['name', 'email', 'subject', 'message'] as $column) {
+                        $query->orWhereLike($column, '%'.$input['search'].'%');
+                    }
+                });
+            }
+        } elseif ($field && ! empty($input['search'])) {
             $query->whereLike($field, '%'.$input['search'].'%');
         }
 
-        return ContentResource::collection($query->latest('updated_at')->orderByDesc('id')->paginate($input['per_page'] ?? 25));
+        return ContentResource::collection($query->latest($resource === 'contact-messages' ? 'created_at' : 'updated_at')->orderByDesc('id')->paginate($input['per_page'] ?? 25));
     }
 
     public function show(string $resource, int $id): ContentResource
@@ -41,6 +52,14 @@ class AdminContentController extends Controller
         $record = DB::transaction(function () use ($request, $resource, $id, $definition): Model {
             $record = $id ? ContentRegistry::query($resource)->findOrFail($id) : ContentRegistry::query($resource)->make();
             $values = $request->validated();
+            if ($resource === 'contact-messages' && isset($values['status'])) {
+                if (in_array($values['status'], ['read', 'replied']) && ! $record->read_at) {
+                    $values['read_at'] = now();
+                }
+                if ($values['status'] === 'replied' && ! $record->replied_at) {
+                    $values['replied_at'] = now();
+                }
+            }
             $relations = [];
             foreach ($definition['fields'] as $field => $spec) {
                 if (isset($spec['relation']) && array_key_exists($field, $values)) {

@@ -246,7 +246,7 @@ return [
             'email' => ['type' => 'email', 'required' => true, 'rules' => ['required', 'string', 'max:255', 'email'], 'unique' => false],
             'subject' => ['type' => 'text', 'required' => false, 'rules' => ['nullable', 'string', 'max:255'], 'unique' => false],
             'message' => ['type' => 'textarea', 'required' => true, 'rules' => ['required', 'string', 'max:10000'], 'unique' => false],
-            'status' => ['type' => 'select', 'required' => false, 'rules' => ['sometimes', 'string', 'in:unread,read,replied,archived,spam,unread'], 'unique' => false, 'options' => ['unread', 'read', 'replied', 'archived', 'spam', 'unread'], 'default' => 'unread'],
+            'status' => ['type' => 'select', 'required' => false, 'rules' => ['sometimes', 'string', 'in:unread,read,replied,archived,spam'], 'unique' => false, 'options' => ['unread', 'read', 'replied', 'archived', 'spam'], 'default' => 'unread'],
             'admin_notes' => ['type' => 'textarea', 'required' => false, 'rules' => ['nullable', 'string', 'max:10000'], 'unique' => false],
             'read_at' => ['type' => 'datetime-local', 'required' => false, 'rules' => ['nullable', 'date'], 'unique' => false],
             'replied_at' => ['type' => 'datetime-local', 'required' => false, 'rules' => ['nullable', 'date'], 'unique' => false],
