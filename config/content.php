@@ -59,6 +59,7 @@ return [
         'model' => 'SkillCategory',
         'table' => 'skill_categories',
         'fields' => [
+            'is_visible' => ['type' => 'checkbox', 'required' => false, 'rules' => ['sometimes', 'boolean'], 'default' => true],
             'name' => ['type' => 'text', 'required' => true, 'rules' => ['required', 'string', 'max:255'], 'unique' => false],
             'slug' => ['type' => 'text', 'required' => true, 'rules' => ['required', 'string', 'max:255', 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/'], 'unique' => true],
             'description' => ['type' => 'textarea', 'required' => false, 'rules' => ['nullable', 'string', 'max:10000'], 'unique' => false],

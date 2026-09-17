@@ -25,6 +25,9 @@ class AdminContentController extends Controller
         if (in_array($resource, ['project-categories', 'technologies'])) {
             $query->withCount('projects');
         }
+        if ($resource === 'skill-categories') {
+            $query->withCount('skills');
+        }
         $field = isset($definition['fields']['title']) ? 'title' : (isset($definition['fields']['name']) ? 'name' : null);
         if ($resource === 'contact-messages') {
             if (! empty($input['status'])) {

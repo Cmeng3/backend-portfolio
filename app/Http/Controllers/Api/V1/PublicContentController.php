@@ -21,6 +21,9 @@ class PublicContentController extends Controller
         if (isset($definition['fields']['is_visible'])) {
             $query->where('is_visible', true);
         }
+        if ($resource === 'skills') {
+            $query->whereHas('category', fn (Builder $category) => $category->where('is_visible', true));
+        }
         if ($resource === 'site-settings') {
             $query->where('is_public', true);
         }

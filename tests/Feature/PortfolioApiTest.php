@@ -31,6 +31,23 @@ class PortfolioApiTest extends TestCase
         return $user;
     }
 
+    public function test_skill_category_visibility_hides_group_without_changing_skills(): void
+    {
+        $this->actingAs($this->admin());
+        $category = $this->postJson('/api/v1/admin/skill-categories', ['name' => 'Backend', 'slug' => 'backend', 'is_visible' => true])->assertCreated()->json('data.id');
+        $this->postJson('/api/v1/admin/skills', ['name' => 'PHP', 'slug' => 'php', 'skill_category_id' => $category, 'is_visible' => true])->assertCreated();
+        $this->postJson('/api/v1/admin/skills', ['name' => 'Java', 'slug' => 'java', 'skill_category_id' => $category, 'is_visible' => false])->assertCreated();
+        $this->getJson('/api/v1/admin/skill-categories')->assertJsonPath('data.0.skills_count', 2);
+        $this->getJson('/api/v1/skills')->assertJsonCount(1, 'data');
+        $this->patchJson('/api/v1/admin/skill-categories/'.$category, ['is_visible' => false])->assertOk();
+        $this->getJson('/api/v1/skill-categories')->assertJsonCount(0, 'data');
+        $this->getJson('/api/v1/skills')->assertJsonCount(0, 'data');
+        $this->getJson('/api/v1/admin/skills')->assertJsonCount(2, 'data');
+        $this->patchJson('/api/v1/admin/skill-categories/'.$category, ['is_visible' => true])->assertOk();
+        $this->getJson('/api/v1/skills')->assertJsonCount(1, 'data')->assertJsonPath('data.0.name', 'PHP');
+        $this->patchJson('/api/v1/admin/skill-categories/'.$category, ['is_visible' => 'invalid'])->assertUnprocessable();
+    }
+
     public function test_project_taxonomy_visibility_preserves_assignments_and_hides_public_labels(): void
     {
         $this->actingAs($this->admin());
