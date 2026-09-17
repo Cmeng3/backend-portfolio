@@ -175,8 +175,10 @@ return [
             'sort_order' => ['type' => 'number', 'required' => false, 'rules' => ['sometimes', 'integer', 'min:0', 'max:2147483647'], 'unique' => false, 'default' => 0],
             'published_at' => ['type' => 'datetime-local', 'required' => false, 'rules' => ['nullable', 'date'], 'unique' => false],
             'coursework' => ['type' => 'textarea', 'required' => false, 'rules' => ['nullable', 'string', 'max:100000'], 'unique' => false],
+            'media_id' => ['type' => 'reference', 'required' => false, 'rules' => ['nullable', 'integer', 'exists:media,id'], 'reference' => 'media'],
+            'pdf_media_id' => ['type' => 'reference', 'required' => false, 'rules' => ['nullable', 'integer', 'exists:media,id'], 'reference' => 'media'],
         ],
-        'relations' => [],
+        'relations' => ['media', 'pdf'],
     ],
     'certifications' => [
         'model' => 'Certification',

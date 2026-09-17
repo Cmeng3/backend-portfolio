@@ -31,6 +31,32 @@ class PortfolioApiTest extends TestCase
         return $user;
     }
 
+    public function test_education_documents_can_be_uploaded_attached_and_published(): void
+    {
+        Storage::fake('public');
+        $this->actingAs($this->admin());
+        $image = $this->postJson('/api/v1/admin/media', [
+            'file' => UploadedFile::fake()->image('diploma.png'),
+            'folder' => 'portfolio/education',
+        ])->assertCreated()->json('data.id');
+        $pdf = $this->postJson('/api/v1/admin/media', [
+            'file' => UploadedFile::fake()->createWithContent('degree.pdf', "%PDF-1.4\n1 0 obj\n<<>>\nendobj\n%%EOF"),
+            'folder' => 'portfolio/education',
+        ])->assertCreated()->json('data.id');
+        $id = $this->postJson('/api/v1/admin/education', [
+            'institution' => 'Example University', 'qualification' => 'Computer Science',
+            'media_id' => $image, 'pdf_media_id' => $pdf,
+            'published_at' => now()->subMinute()->toIso8601String(),
+        ])->assertCreated()->json('data.id');
+        $this->getJson('/api/v1/education')->assertOk()
+            ->assertJsonPath('data.0.media.id', $image)
+            ->assertJsonPath('data.0.pdf.id', $pdf);
+        $this->patchJson('/api/v1/admin/education/'.$id, ['media_id' => $pdf])
+            ->assertUnprocessable()->assertJsonValidationErrors('media_id');
+        $this->patchJson('/api/v1/admin/education/'.$id, ['pdf_media_id' => $image])
+            ->assertUnprocessable()->assertJsonValidationErrors('pdf_media_id');
+    }
+
     public function test_admin_category_references_resolve_to_available_tables(): void
     {
         $definitions = config('content');
