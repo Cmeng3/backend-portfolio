@@ -16,6 +16,7 @@ RUN mkdir -p storage/framework/cache/data storage/framework/sessions storage/fra
     && chown -R www-data:www-data storage bootstrap/cache
 
 COPY docker/apache.conf /etc/apache2/sites-available/000-default.conf
+COPY docker/mpm_prefork.conf /etc/apache2/mods-available/mpm_prefork.conf
 COPY docker/ports.conf /etc/apache2/ports.conf
 COPY docker/php.ini /usr/local/etc/php/conf.d/portfolio.ini
 COPY docker/start.sh /usr/local/bin/portfolio-start
